@@ -51,12 +51,12 @@ class Caller:
         if result:
             raise Exception("Error occurred during call simulation.")
 
-    def _simulate_call(self, queue: QueueEntity):
+    async def _simulate_call(self, queue: QueueEntity):
         logger.info(f"type of queue:  {type(queue)}")
 
         random_int = random.randint(10, 30)
         logger.info(f"Waiting for {random_int} seconds for simulating call.")
-        time.sleep(random_int)
+        await asyncio.sleep(random_int)
         random_status = random.choice(["answered", "canceled", "busy", "not_reached"])
         update_queue_fields = {
             "last_attempt_time": datetime.now(timezone.utc),
