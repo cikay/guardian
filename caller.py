@@ -4,7 +4,7 @@ import asyncio
 import random
 import time
 
-from dtos import QueueQuery, ComparisonOperators, NotificationCreate, QueueUpdate
+from dtos import QueueFilterSet, ComparisonOperatorSet, NotificationCreate, QueueUpdate
 from use_case_factories import (
     ListQueueUseCaseFactory,
     CreateNotificationUseCaseFactory,
@@ -26,9 +26,9 @@ class Caller:
 
     def call(self):
         queues = self.list_queue_use_case.execute(
-            QueueQuery(
-                status=ComparisonOperators(in_=["pending", "failed", "busy"]),
-                scheduled_time=ComparisonOperators(lte=datetime.now()),
+            QueueFilterSet(
+                status=ComparisonOperatorSet(in_=["pending", "failed", "busy"]),
+                scheduled_time=ComparisonOperatorSet(lte=datetime.now()),
             )
         )
         for queue in queues:

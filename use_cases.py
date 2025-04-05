@@ -7,8 +7,9 @@ from repositories import (
     QueueRepository,
     NotificationRepository,
 )
-from dtos import CampaignCreate, QueueQuery, QueueCreate, NotificationCreate
+from dtos import CampaignCreate, QueueFilterSet, QueueCreate, NotificationCreate
 from entities import CampaignEntity
+from filter_converter import ComparisonOperatorSet
 
 
 class CampaignCreateUseCase:
@@ -95,7 +96,7 @@ class ListQueueUseCase:
     def __init__(self, queue_repo: QueueRepository):
         self.queue_repo = queue_repo
 
-    def execute(self, query: QueueQuery):
+    def execute(self, query: QueueFilterSet):
         return self.queue_repo.get_many(query)
 
 

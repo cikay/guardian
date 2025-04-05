@@ -10,7 +10,7 @@ T = TypeVar("T")
 
 
 @dataclass
-class ComparisonOperators(Generic[T]):
+class ComparisonOperatorSet(Generic[T]):
     in_: Optional[list[T]] = UNSET
     eq: Optional[T] = UNSET
     neq: Optional[T] = UNSET
@@ -37,32 +37,32 @@ class CampaignCreate:
 @dataclass
 class CampaignRead:
     id: int
-    name: str 
+    name: str
     phone: Literal["1234567890", "9876543210", "5551234567"]
     call_date: datetime
     recipients: list["RecipientRead"]
 
 
 @dataclass
-class RecipientQuery:
-    id: int | ComparisonOperators | UNSET = UNSET
-    phone: str | ComparisonOperators | UNSET = UNSET
+class RecipientFilterSet:
+    id: int | ComparisonOperatorSet | UNSET = UNSET
+    phone: str | ComparisonOperatorSet | UNSET = UNSET
 
 
 @dataclass
-class CampaignQuery:
-    id: int | ComparisonOperators | UNSET = UNSET
-    name: str | ComparisonOperators | UNSET = UNSET
-    phone: str | ComparisonOperators | UNSET = UNSET
-    call_date: datetime | ComparisonOperators | UNSET = UNSET
-    recipient: Optional["RecipientQuery"] = UNSET
+class CampaignFilterSet:
+    id: int | ComparisonOperatorSet | UNSET = UNSET
+    name: str | ComparisonOperatorSet | UNSET = UNSET
+    phone: str | ComparisonOperatorSet | UNSET = UNSET
+    call_date: datetime | ComparisonOperatorSet | UNSET = UNSET
+    recipient: Optional["RecipientFilterSet"] = UNSET
 
 
 @dataclass
-class QueueQuery:
-    id: int | ComparisonOperators = UNSET
-    status: str | ComparisonOperators[str] = UNSET
-    scheduled_time: datetime | ComparisonOperators[datetime] = UNSET
+class QueueFilterSet:
+    id: int | ComparisonOperatorSet = UNSET
+    status: str | ComparisonOperatorSet[str] = UNSET
+    scheduled_time: datetime | ComparisonOperatorSet[datetime] = UNSET
 
 
 @dataclass

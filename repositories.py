@@ -7,25 +7,15 @@ from sqlalchemy.orm import Session
 from models import CampaignDB, RecipientDB, QueueDB, NotificationDB
 from dtos import (
     CampaignCreate,
-    QueueQuery,
+    QueueFilterSet,
     UNSET,
     QueueCreate,
     NotificationCreate,
-    CampaignQuery,
+    CampaignFilterSet,
     QueueUpdate,
 )
 from entities import CampaignEntity, RecipientEntity, QueueEntity, NotificationEntity
-
-
-OPERATION_MAPPING = {
-    "eq": lambda x, y: x == y,
-    "ne": lambda x, y: x != y,
-    "gt": lambda x, y: x > y,
-    "gte": lambda x, y: x >= y,
-    "lt": lambda x, y: x < y,
-    "lte": lambda x, y: x <= y,
-    "in_": lambda x, y: x.in_(y),
-}
+from filter_converter import FilterConverter, SqlAlchemyOperatorSet
 
 
 class BaseRepository:
@@ -34,31 +24,10 @@ class BaseRepository:
     def __init__(self, session: Session):
         self.session = session
 
-    def _build_query(self, query: dict) -> select:
-        filters = []
-        for key, value in query.items():
-            if value is UNSET:
-                continue
-
-            if isinstance(value, dict):
-                filters.extend(self._build_field_filters(key, value))
-            else:
-                filters.append(getattr(self.__class__.db_model, key) == value)
-
-        return self.session.query(self.__class__.db_model).filter(*filters)
-
-    def _build_field_filters(self, field: str, operators: dict) -> select:
-        filters = []
-
-        for key, value in operators.items():
-            if value is UNSET:
-                continue
-
-            func = OPERATION_MAPPING[key]
-            filter = func(getattr(self.__class__.db_model, field), value)
-            filters.append(filter)
-
-        return filters
+    def _build_filters(self, filter_set):
+        orm_operator_set = SqlAlchemyOperatorSet(self.db_model)
+        converter = FilterConverter(orm_operator_set)
+        return converter.convert(filter_set)
 
     def _get_dataclass_fields_name(self, entity):
         return {field.name for field in fields(entity)}
@@ -91,8 +60,9 @@ class CampaignRepository(BaseRepository):
         self.session.refresh(campaign_db)
         return self._to_entity(campaign_db)
 
-    def get_many(self, query: CampaignQuery) -> list[CampaignEntity]:
-        query = self._build_query(asdict(query))
+    def get_many(self, filter_set: CampaignFilterSet) -> list[CampaignEntity]:
+        orm_filter_set = self._build_filters(filter_set)
+        query = self.session.query(self.db_model).filter(*orm_filter_set)
         return [self._to_entity(campaign) for campaign in query.all()]
 
     def _to_entity(self, campaign_db: CampaignDB) -> CampaignEntity:
@@ -143,8 +113,9 @@ class RecipientRepository(BaseRepository):
 class QueueRepository(BaseRepository):
     db_model = QueueDB
 
-    def get(self, query: QueueQuery) -> QueueDB | None:
-        query = self._build_query(query)
+    def get(self, filters: QueueFilterSet) -> QueueDB | None:
+        orm_filters = self._build_filters(filters)
+        query = self.session.query(self.db_model).filter(*orm_filters)
         return query.first()
 
     def create(self, queue_create: QueueCreate) -> QueueDB:
@@ -167,11 +138,13 @@ class QueueRepository(BaseRepository):
         return self._to_entity(queue_item)
 
     def get_many(
-        self, query: QueueQuery, order_by: str | None = None
-    ) -> QueueDB | None:
-        query = self._build_query(asdict(query))
+        self, filter_set: QueueFilterSet, order_by: str | None = None
+    ) -> list[QueueEntity]:
+        orm_filter_set = self._build_filters(filter_set)
+        query = self.session.query(self.db_model).filter(*orm_filter_set)
         if order_by:
             query = query.order_by(getattr(QueueDB, order_by))
+
         return [self._to_entity(queue) for queue in query.all()]
 
     def update_status(self, queue_id: int, status: str):
