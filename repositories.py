@@ -33,53 +33,6 @@ class BaseRepository:
         return {field.name for field in fields(entity)}
 
 
-class CampaignRepository(BaseRepository):
-    db_model = CampaignDB
-
-    def __init__(self, session: Session):
-        self.session = session
-
-    def create(self, campaign_create: CampaignCreate) -> CampaignEntity:
-        recipient_objects = (
-            self.session.execute(
-                select(RecipientDB).where(
-                    RecipientDB.id.in_(campaign_create.recipients)
-                )
-            )
-            .scalars()
-            .all()
-        )
-        campaign_db = CampaignDB(
-            name=campaign_create.name,
-            phone=campaign_create.phone,
-            call_date=campaign_create.call_date,
-            recipients=recipient_objects,
-        )
-        self.session.add(campaign_db)
-        self.session.commit()
-        self.session.refresh(campaign_db)
-        return self._to_entity(campaign_db)
-
-    def get_many(self, filter_set: CampaignFilterSet) -> list[CampaignEntity]:
-        orm_filter_set = self._build_filters(filter_set)
-        query = self.session.query(self.db_model).filter(*orm_filter_set)
-        return [self._to_entity(campaign) for campaign in query.all()]
-
-    def _to_entity(self, campaign_db: CampaignDB) -> CampaignEntity:
-        recipient_repo = RecipientRepository(self.session)
-
-        return CampaignEntity(
-            id=campaign_db.id,
-            name=campaign_db.name,
-            phone=campaign_db.phone,
-            call_date=campaign_db.call_date,
-            recipients=[
-                recipient_repo._to_entity(recipient)
-                for recipient in campaign_db.recipients
-            ],
-        )
-
-
 class RecipientRepository(BaseRepository):
     db_model = RecipientDB
 
@@ -108,6 +61,52 @@ class RecipientRepository(BaseRepository):
 
     def _to_entity(self, recipient_db: RecipientDB) -> RecipientEntity:
         return RecipientEntity(id=recipient_db.id, phone=recipient_db.phone)
+
+
+class CampaignRepository(BaseRepository):
+    db_model = CampaignDB
+
+    def __init__(self, session: Session, recipient_repo: RecipientRepository):
+        self.session = session
+        self.recipient_repo = recipient_repo
+
+    def create(self, campaign_create: CampaignCreate) -> CampaignEntity:
+        recipient_objects = (
+            self.session.execute(
+                select(RecipientDB).where(
+                    RecipientDB.id.in_(campaign_create.recipients)
+                )
+            )
+            .scalars()
+            .all()
+        )
+        campaign_db = CampaignDB(
+            name=campaign_create.name,
+            phone=campaign_create.phone,
+            call_date=campaign_create.call_date,
+            recipients=recipient_objects,
+        )
+        self.session.add(campaign_db)
+        self.session.commit()
+        self.session.refresh(campaign_db)
+        return self._to_entity(campaign_db)
+
+    def get_many(self, filter_set: CampaignFilterSet) -> list[CampaignEntity]:
+        orm_filter_set = self._build_filters(filter_set)
+        query = self.session.query(self.db_model).filter(*orm_filter_set)
+        return [self._to_entity(campaign) for campaign in query.all()]
+
+    def _to_entity(self, campaign_db: CampaignDB) -> CampaignEntity:
+        return CampaignEntity(
+            id=campaign_db.id,
+            name=campaign_db.name,
+            phone=campaign_db.phone,
+            call_date=campaign_db.call_date,
+            recipients=[
+                self.recipient_repo._to_entity(recipient)
+                for recipient in campaign_db.recipients
+            ],
+        )
 
 
 class QueueRepository(BaseRepository):
