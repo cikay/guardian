@@ -38,9 +38,9 @@ class CampaignCreate:
 class CampaignRead:
     id: int
     name: str
-    phone: Literal["1234567890", "9876543210", "5551234567"]
+    phone: str
     call_date: datetime
-    recipients: list["RecipientRead"]
+    recipients: list[RecipientRead]
 
 
 @dataclass

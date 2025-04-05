@@ -20,6 +20,7 @@ class CampaignEntity:
 
     # Entity business logic goes here
 
+
 @dataclass
 class QueueEntity:
     id: int
