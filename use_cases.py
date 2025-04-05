@@ -12,15 +12,25 @@ from entities import CampaignEntity
 from filter_converter import ComparisonOperatorSet
 
 
+class CreateQueueUseCase:
+    def __init__(self, queue_repo: QueueRepository):
+        self.queue_repo = queue_repo
+
+    def execute(self, queue: QueueCreate):
+        return self.queue_repo.create(queue)
+
+
 class CampaignCreateUseCase:
 
     def __init__(
         self,
         campaign_repository: CampaignRepository,
         recipient_repository: RecipientRepository,
+        create_queue_case: CreateQueueUseCase,
     ):
         self.campaign_repository = campaign_repository
         self.recipient_repository = recipient_repository
+        self.create_queue_case = create_queue_case
 
     def execute(self, campaign_create: CampaignCreate) -> CampaignEntity:
         errors = self._validate(campaign_create)
@@ -38,12 +48,6 @@ class CampaignCreateUseCase:
         return campaign_entity
 
     def _create_queues(self, campaign_entity: CampaignEntity):
-        from use_case_factories import CreateQueueUseCaseFactory
-
-        create_queue_case = CreateQueueUseCaseFactory.create(
-            self.campaign_repository.session
-        )
-
         for recipient in campaign_entity.recipients:
             queue = QueueCreate(
                 recipient_id=recipient.id,
@@ -51,7 +55,7 @@ class CampaignCreateUseCase:
                 status="pending",
                 scheduled_time=campaign_entity.call_date,
             )
-            create_queue_case.execute(queue)
+            self.create_queue_case.execute(queue)
 
     def _validate(self, campaign_create) -> set[str]:
         errors = set()
@@ -98,14 +102,6 @@ class ListQueueUseCase:
 
     def execute(self, query: QueueFilterSet):
         return self.queue_repo.get_many(query)
-
-
-class CreateQueueUseCase:
-    def __init__(self, queue_repo: QueueRepository):
-        self.queue_repo = queue_repo
-
-    def execute(self, queue: QueueCreate):
-        return self.queue_repo.create(queue)
 
 
 class UpdateQueueUseCase:

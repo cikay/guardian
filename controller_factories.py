@@ -1,6 +1,7 @@
 from controllers import ListCampaignController, CreateCampaignController
 from use_cases import CampaignCreateUseCase, CampaignListUseCase
 from repositories import CampaignRepository, RecipientRepository
+from use_case_factories import CreateQueueUseCaseFactory
 
 
 class CreateCampaignControllerFactory:
@@ -8,7 +9,10 @@ class CreateCampaignControllerFactory:
     def create(session) -> CreateCampaignController:
         campaign_repo = CampaignRepository(session)
         recipient_repo = RecipientRepository(session)
-        use_case = CampaignCreateUseCase(campaign_repo, recipient_repo)
+        create_queue_case = CreateQueueUseCaseFactory.create(session)
+        use_case = CampaignCreateUseCase(
+            campaign_repo, recipient_repo, create_queue_case
+        )
         return CreateCampaignController(use_case)
 
 
