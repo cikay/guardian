@@ -1,35 +1,35 @@
 from use_cases import (
-    ListQueueUseCase,
-    CreateQueueUseCase,
-    CreateNotificationUseCase,
-    UpdateQueueUseCase,
+    QueueListerUseCase,
+    QueueCreatorUseCase,
+    NotificationCreatorUseCase,
+    QueueUpdaterUseCase,
 )
 from repositories import QueueRepository, NotificationRepository
 
 
-class ListQueueUseCaseFactory:
+class QueueListerUseCaseFactory:
     @staticmethod
-    def create(session) -> ListQueueUseCase:
+    def create(session) -> QueueListerUseCase:
         repo = QueueRepository(session)
-        return ListQueueUseCase(repo)
+        return QueueListerUseCase(repo)
 
 
-class CreateQueueUseCaseFactory:
+class QueueCreatorUseCaseFactory:
     @staticmethod
-    def create(session) -> CreateQueueUseCase:
+    def create(session) -> QueueCreatorUseCase:
         repo = QueueRepository(session)
-        return CreateQueueUseCase(repo)
+        return QueueCreatorUseCase(repo)
 
 
-class CreateNotificationUseCaseFactory:
+class NotificationCreatorUseCaseFactory:
     @staticmethod
-    def create(session) -> CreateNotificationUseCase:
+    def create(session) -> NotificationCreatorUseCase:
         repo = NotificationRepository(session)
-        return CreateNotificationUseCase(repo)
+        return NotificationCreatorUseCase(repo)
 
 
-class UpdateQueueUseCaseFactory:
+class QueueUpdaterUseCaseFactory:
     @staticmethod
-    def create(session) -> UpdateQueueUseCase:
+    def create(session) -> QueueUpdaterUseCase:
         repo = QueueRepository(session)
-        return UpdateQueueUseCase(repo)
+        return QueueUpdaterUseCase(repo)

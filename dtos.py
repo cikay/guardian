@@ -1,6 +1,6 @@
 from datetime import datetime
 from typing import Optional
-from typing import Generic, TypeVar, Literal
+from typing import Generic, TypeVar
 from dataclasses import dataclass
 
 
@@ -21,13 +21,13 @@ class ComparisonOperatorSet(Generic[T]):
 
 
 @dataclass
-class RecipientRead:
+class RecipientReaderDTO:
     id: int
     phone: str
 
 
 @dataclass
-class CampaignCreate:
+class CampaignCreatorDTO:
     name: str
     phone: str
     call_date: datetime
@@ -35,12 +35,12 @@ class CampaignCreate:
 
 
 @dataclass
-class CampaignRead:
+class CampaignReaderDTO:
     id: int
     name: str
     phone: str
     call_date: datetime
-    recipients: list[RecipientRead]
+    recipients: list[RecipientReaderDTO]
 
 
 @dataclass
@@ -66,7 +66,7 @@ class QueueFilterSet:
 
 
 @dataclass
-class QueueCreate:
+class QueueCreatorDTO:
     recipient_id: int
     campaign_id: int
     status: str
@@ -74,14 +74,14 @@ class QueueCreate:
 
 
 @dataclass
-class QueueUpdate:
+class QueueUpdaterDTO:
     status: str
     last_attempt_time: datetime
     attempt_count: int
 
 
 @dataclass
-class NotificationCreate:
+class NotificationCreatorDTO:
     recipient_id: int
     campaign_id: int
     send_time: datetime
