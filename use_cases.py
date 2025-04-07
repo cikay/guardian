@@ -1,38 +1,38 @@
 from datetime import datetime, timezone
 
 from exceptions import CustomException
-from repositories import (
-    CampaignRepository,
-    RecipientRepository,
-    QueueRepository,
-    NotificationRepository,
+from dtos import (
+    CampaignCreatorDTO,
+    QueueFilterSet,
+    QueueCreatorDTO,
+    NotificationCreatorDTO,
 )
-from dtos import CampaignCreate, QueueFilterSet, QueueCreate, NotificationCreate
 from entities import CampaignEntity
-from filter_converter import ComparisonOperatorSet
+from repository_protocols import RepositoryProtocol
 
 
-class CreateQueueUseCase:
-    def __init__(self, queue_repo: QueueRepository):
+class QueueCreatorUseCase:
+
+    def __init__(self, queue_repo: RepositoryProtocol):
         self.queue_repo = queue_repo
 
-    def execute(self, queue: QueueCreate):
+    def execute(self, queue: QueueCreatorDTO):
         return self.queue_repo.create(queue)
 
 
-class CampaignCreateUseCase:
+class CampaignCreatorUseCase:
 
     def __init__(
         self,
-        campaign_repository: CampaignRepository,
-        recipient_repository: RecipientRepository,
-        create_queue_case: CreateQueueUseCase,
+        campaign_repository: RepositoryProtocol,
+        recipient_repository: RepositoryProtocol,
+        create_queue_case: QueueCreatorUseCase,
     ):
         self.campaign_repository = campaign_repository
         self.recipient_repository = recipient_repository
         self.create_queue_case = create_queue_case
 
-    def execute(self, campaign_create: CampaignCreate) -> CampaignEntity:
+    def execute(self, campaign_create: CampaignCreatorDTO) -> CampaignEntity:
         errors = self._validate(campaign_create)
         if errors:
             raise CustomException(errors)
@@ -49,7 +49,7 @@ class CampaignCreateUseCase:
 
     def _create_queues(self, campaign_entity: CampaignEntity):
         for recipient in campaign_entity.recipients:
-            queue = QueueCreate(
+            queue = QueueCreatorDTO(
                 recipient_id=recipient.id,
                 campaign_id=campaign_entity.id,
                 status="pending",
@@ -87,34 +87,37 @@ class CampaignCreateUseCase:
         return errors
 
 
-class CampaignListUseCase:
+class CampaignListerUseCase:
 
-    def __init__(self, campaign_repository: CampaignRepository):
+    def __init__(self, campaign_repository: RepositoryProtocol):
         self.campaign_repository = campaign_repository
 
     def execute(self, campaign):
         return self.campaign_repository.get_many(campaign)
 
 
-class ListQueueUseCase:
-    def __init__(self, queue_repo: QueueRepository):
+class QueueListerUseCase:
+
+    def __init__(self, queue_repo: RepositoryProtocol):
         self.queue_repo = queue_repo
 
     def execute(self, query: QueueFilterSet):
         return self.queue_repo.get_many(query)
 
 
-class UpdateQueueUseCase:
-    def __init__(self, queue_repo: QueueRepository):
+class QueueUpdaterUseCase:
+
+    def __init__(self, queue_repo: RepositoryProtocol):
         self.queue_repo = queue_repo
 
-    def execute(self, queue_id: int, queue: QueueCreate):
+    def execute(self, queue_id: int, queue: QueueCreatorDTO):
         return self.queue_repo.update(queue_id, queue)
 
 
-class CreateNotificationUseCase:
-    def __init__(self, notification_repo: NotificationRepository):
+class NotificationCreatorUseCase:
+
+    def __init__(self, notification_repo: RepositoryProtocol):
         self.notification_repo = notification_repo
 
-    def execute(self, notification: NotificationCreate):
+    def execute(self, notification: NotificationCreatorDTO):
         return self.notification_repo.create(notification)

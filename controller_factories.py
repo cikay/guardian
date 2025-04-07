@@ -1,25 +1,25 @@
-from controllers import ListCampaignController, CreateCampaignController
-from use_cases import CampaignCreateUseCase, CampaignListUseCase
+from controllers import CampaignListerController, CampaignCreatorController
+from use_cases import CampaignCreatorUseCase, CampaignListerUseCase
 from repositories import CampaignRepository, RecipientRepository
-from use_case_factories import CreateQueueUseCaseFactory
+from use_case_factories import QueueCreatorUseCaseFactory
 
 
-class CreateCampaignControllerFactory:
+class CampaignCreatorControllerFactory:
     @staticmethod
-    def create(session) -> CreateCampaignController:
+    def create(session) -> CampaignCreatorController:
         recipient_repo = RecipientRepository(session)
         campaign_repo = CampaignRepository(session, recipient_repo)
-        create_queue_case = CreateQueueUseCaseFactory.create(session)
-        use_case = CampaignCreateUseCase(
-            campaign_repo, recipient_repo, create_queue_case
+        queue_creator_use_case = QueueCreatorUseCaseFactory.create(session)
+        campaign_creator_use_case = CampaignCreatorUseCase(
+            campaign_repo, recipient_repo, queue_creator_use_case
         )
-        return CreateCampaignController(use_case)
+        return CampaignCreatorController(campaign_creator_use_case)
 
 
-class ListCampaignControllerFactory:
+class CampaignListerControllerFactory:
     @staticmethod
-    def create(session) -> ListCampaignController:
+    def create(session) -> CampaignListerController:
         recipient_repo = RecipientRepository(session)
         campaign_repo = CampaignRepository(session, recipient_repo)
-        use_case = CampaignListUseCase(campaign_repo)
-        return ListCampaignController(use_case)
+        campaign_lister_use_case = CampaignListerUseCase(campaign_repo)
+        return CampaignListerController(campaign_lister_use_case)

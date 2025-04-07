@@ -6,13 +6,14 @@ from sqlalchemy.orm import Session
 
 from models import CampaignDB, RecipientDB, QueueDB, NotificationDB
 from dtos import (
-    CampaignCreate,
+    QueueFilterSet,
+    CampaignCreatorDTO,
     QueueFilterSet,
     UNSET,
-    QueueCreate,
-    NotificationCreate,
+    QueueCreatorDTO,
+    NotificationCreatorDTO,
     CampaignFilterSet,
-    QueueUpdate,
+    QueueUpdaterDTO,
 )
 from entities import CampaignEntity, RecipientEntity, QueueEntity, NotificationEntity
 from filter_converter import FilterConverter, SqlAlchemyOperatorSet
@@ -73,7 +74,7 @@ class CampaignRepository(BaseRepository):
         self.session = session
         self.recipient_repo = recipient_repo
 
-    def create(self, campaign_create: CampaignCreate) -> CampaignEntity:
+    def create(self, campaign_create: CampaignCreatorDTO) -> CampaignEntity:
         recipient_objects = (
             self.session.execute(
                 select(RecipientDB).where(
@@ -110,18 +111,18 @@ class QueueRepository(BaseRepository):
         query = self.session.query(self.db_model).filter(*orm_filters)
         return query.first()
 
-    def create(self, queue_create: QueueCreate) -> QueueEntity:
+    def create(self, queue_create: QueueCreatorDTO) -> QueueEntity:
         queue_item = QueueDB(**asdict(queue_create))
         self.session.add(queue_item)
         self.session.commit()
         return QueueEntityModelMapper.to_entity(queue_item)
 
-    def update(self, queue_id: int, queue_update: QueueUpdate) -> QueueEntity:
+    def update(self, queue_id: int, queue_update: QueueUpdaterDTO) -> QueueEntity:
         queue_item = self.session.query(QueueDB).get(queue_id)
         if not queue_item:
             return None
 
-        for field in fields(QueueUpdate):
+        for field in fields(QueueUpdaterDTO):
             field_value = getattr(queue_update, field.name)
             if field_value is not UNSET:
                 setattr(queue_item, field.name, field_value)
@@ -158,7 +159,7 @@ class NotificationRepository(BaseRepository):
     def __init__(self, session: Session):
         self.session = session
 
-    def create(self, notification_create: NotificationCreate) -> NotificationEntity:
+    def create(self, notification_create: NotificationCreatorDTO) -> NotificationEntity:
         notification_db = NotificationDB(**asdict(notification_create))
         self.session.add(notification_db)
         self.session.commit()

@@ -4,11 +4,16 @@ import asyncio
 import random
 import time
 
-from dtos import QueueFilterSet, ComparisonOperatorSet, NotificationCreate, QueueUpdate
+from dtos import (
+    QueueFilterSet,
+    ComparisonOperatorSet,
+    NotificationCreatorDTO,
+    QueueUpdaterDTO,
+)
 from use_case_factories import (
-    ListQueueUseCaseFactory,
-    CreateNotificationUseCaseFactory,
-    UpdateQueueUseCaseFactory,
+    QueueListerUseCaseFactory,
+    NotificationCreatorUseCaseFactory,
+    QueueUpdaterUseCaseFactory,
 )
 from entities import QueueEntity
 
@@ -18,14 +23,14 @@ logger = logging.getLogger(__name__)
 class Caller:
     def __init__(self, session):
         self.session = session
-        self.create_notification_use_case = CreateNotificationUseCaseFactory.create(
+        self.notification_creator_use_case = NotificationCreatorUseCaseFactory.create(
             self.session
         )
-        self.list_queue_use_case = ListQueueUseCaseFactory.create(self.session)
-        self.update_queue_use_case = UpdateQueueUseCaseFactory.create(self.session)
+        self.queue_lister_use_case = QueueListerUseCaseFactory.create(self.session)
+        self.queue_updater_use_case = QueueUpdaterUseCaseFactory.create(self.session)
 
     def call(self):
-        queues = self.list_queue_use_case.execute(
+        queues = self.queue_lister_use_case.execute(
             QueueFilterSet(
                 status=ComparisonOperatorSet(in_=["pending", "failed", "busy"]),
                 scheduled_time=ComparisonOperatorSet(lte=datetime.now()),
@@ -65,8 +70,8 @@ class Caller:
         }
 
         try:
-            self.create_notification_use_case.execute(
-                NotificationCreate(
+            self.notification_creator_use_case.execute(
+                NotificationCreatorDTO(
                     recipient_id=queue.recipient_id,
                     campaign_id=queue.campaign_id,
                     status=random_status,
@@ -83,8 +88,8 @@ class Caller:
             logger.error(f"Error creating notification for {queue.recipient}: {e}")
             update_queue_fields["status"] = "busy"
 
-        update_queue = QueueUpdate(**update_queue_fields)
+        update_queue = QueueUpdaterDTO(**update_queue_fields)
 
-        self.update_queue_use_case.execute(queue.id, update_queue)
+        self.queue_updater_use_case.execute(queue.id, update_queue)
 
         logger.info(f"Call simulation completed for: {queue.recipient}")

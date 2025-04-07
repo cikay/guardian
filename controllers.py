@@ -1,28 +1,32 @@
 from exceptions import CustomException
 
-from use_cases import CampaignCreateUseCase, CampaignListUseCase
-from dtos import CampaignFilterSet, CampaignCreate, CampaignRead
-from dto_mapper import CampaignMapper
+from use_case_protocols import (
+    CampaignCreatorUseCaseProtocol,
+    CampaignListerUseCaseProtocol,
+)
+from dtos import CampaignFilterSet, CampaignCreatorDTO, CampaignReaderDTO
+from api_domain_mapper import CampaignAPIDomainMapper
 
 
-class CreateCampaignController:
+class CampaignCreatorController:
 
-    def __init__(self, use_case: CampaignCreateUseCase):
+    def __init__(self, use_case: CampaignCreatorUseCaseProtocol):
         self.use_case = use_case
 
-    def execute(self, campaign_create: CampaignCreate) -> CampaignRead:
+    def execute(self, campaign_creator: CampaignCreatorDTO) -> CampaignReaderDTO:
         try:
-            entity = self.use_case.execute(campaign_create)
+            entity = self.use_case.execute(campaign_creator)
         except CustomException as e:
             return {"error": e.messages}, 400
 
-        campaign_api_read = CampaignMapper.to_api(entity)
+        campaign_api_read = CampaignAPIDomainMapper.to_api(entity)
 
         return campaign_api_read, 201
 
 
-class ListCampaignController:
-    def __init__(self, use_case: CampaignListUseCase):
+class CampaignListerController:
+
+    def __init__(self, use_case: CampaignListerUseCaseProtocol):
         self.use_case = use_case
 
     def execute(self, filter_set: CampaignFilterSet):
@@ -32,7 +36,7 @@ class ListCampaignController:
             return {"error": str(e)}, 400
 
         campaign_api_read_entries = [
-            CampaignMapper.to_api(entity) for entity in entities
+            CampaignAPIDomainMapper.to_api(entity) for entity in entities
         ]
 
         return campaign_api_read_entries, 200
